@@ -39,6 +39,8 @@ class Rocket extends Phaser.GameObjects.Sprite {
         if(this.y <= borderUISize * 3 + borderPadding)
         {
             this.reset()
+            didRocketMiss = true;
+            
         }
     }
 
@@ -50,7 +52,8 @@ class Rocket extends Phaser.GameObjects.Sprite {
         if(isTwoPlayer &&
             numRocketsFired % 2 == 1) {
             this.setTint(0x0000ff) //player two (blue)
-        } else {
+        } else
+        if (isTwoPlayer) {
             this.setTint(0xff0000) //player one (red)
         }
     }

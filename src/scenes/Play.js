@@ -4,6 +4,9 @@ class Play extends Phaser.Scene {
     }
 
     create() {
+        //time tracking 
+        this.startTime = this.time.now;
+        this.totalGameTime = game.settings.gameTimer
         //place tile sprite
         this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0, 0)
         this.starfield.depth = -1
@@ -68,23 +71,7 @@ class Play extends Phaser.Scene {
 
         //60 second clock
         scoreConfig.fixedWidth = 0
-        this.clock = this.time.delayedCall(game.settings.gameTimer, () => {
-            this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', scoreConfig).setOrigin(0.5)
-            this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', scoreConfig).setOrigin(0.5)
-            
-            //show which player wins if two player
-            if(isTwoPlayer && this.p1Score > this.p2Score) { //player 1 victory
-                this.add.text(game.config.width/2, game.config.height/2 + 128, `Red wins! Score: ${this.p1Score}`, scoreConfig).setOrigin(0.5)
-            } else 
-            if (this.p2Score > this.p1Score) { //player 2 victory
-                this.add.text(game.config.width/2, game.config.height/2 + 128, `Blue wins! Score: ${this.p2Score}`, scoreConfig).setOrigin(0.5)
-            } else
-            if (isTwoPlayer && this.p1Score == this.p2Score) //draw
-            {
-                this.add.text(game.config.width/2, game.config.height/2 + 128, `Draw`, scoreConfig).setOrigin(0.5)
-            }
-            this.gameOver = true
-        }, null, this)
+        this.createTimer(game.settings.gameTimer)
     }
 
     update() {
@@ -94,6 +81,7 @@ class Play extends Phaser.Scene {
         }
 
         if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyLEFT)) {
+            isTwoPlayer = false
             this.scene.start("menuScene")
         }
         this.starfield.tilePositionX -= 4
@@ -108,6 +96,14 @@ class Play extends Phaser.Scene {
 
         }
 
+        if(didRocketMiss) {
+            this.adjustTime(-7000)
+            this.timeLost = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '-7 seconds', this.scoreConfig)
+            this.time.delayedCall(1000, () => { //show time added 
+            this.timeLost.destroy();
+            })
+            didRocketMiss = false
+        }
         //collision check
         if(this.checkCollision(this.p1Rocket, this.ship03)){
             this.p1Rocket.reset()
@@ -145,6 +141,12 @@ class Play extends Phaser.Scene {
     }
 
     shipExplode(ship) {
+        //increase time on hit
+        this.adjustTime(5000) //+5 seconds
+        this.timeAdded = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '+5 seconds', this.scoreConfig)
+        this.time.delayedCall(1000, () => { //show time added 
+            this.timeAdded.destroy();
+        })
         //temporarily hide ship
         ship.alpha = 0
 
@@ -171,5 +173,58 @@ class Play extends Phaser.Scene {
 
         this.sound.play('sfx-explosion')
     }
+
+    adjustTime(timeChange) {
+        let elapsedTime = this.time.now - this.startTime
+        let remainingTime = this.totalGameTime - elapsedTime
+
+        let newTime = Math.max(0, remainingTime + timeChange) //time cant be negative
+
+        //destroy old timer
+        this.clock.remove();
+
+        //set new duration
+        this.totalGameTime = elapsedTime + newTime;
+
+        //create new timer
+        //console.log(newTime)
+        this.createTimer(newTime)
+
+    }
+
+    createTimer(time) {
+        this.clock = this.time.delayedCall(time, () => {
+            this.scoreConfig.fixedWidth = 0
+            this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', this.scoreConfig).setOrigin(0.5)
+            this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', this.scoreConfig).setOrigin(0.5)
+            
+            //show which player wins if two player
+            if(isTwoPlayer && this.p1Score > this.p2Score) { //player 1 victory
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Red wins! Score: ${this.p1Score}`, this.scoreConfig).setOrigin(0.5)
+            } else 
+            if (this.p2Score > this.p1Score) { //player 2 victory
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Blue wins! Score: ${this.p2Score}`, this.scoreConfig).setOrigin(0.5)
+            } else
+            if (isTwoPlayer && this.p1Score == this.p2Score) //draw
+            {
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Draw`, this.scoreConfig).setOrigin(0.5)
+            }
+            this.gameOver = true
+        }, null, this)  
+    }
+
+    scoreConfig = {
+        fontFamily: 'Courier',
+        fontSize: '28px',
+        backgroundColor: '#F3B141',
+        color: '#843605',
+        align: 'right',
+        padding: {
+        top: 5,
+        bottom: 5,
+        },
+        fixedWidth: 100
+    }
+
 }
 
