@@ -4,7 +4,7 @@ class Pincer extends Spaceship {
         super(scene, x, y, texture, frame, pointValue)
 
         //this ship moves faster than the default ship
-        this.moveSpeed = game.settings.spaceshipSpeed * 2
+        this.moveSpeed = game.settings.spaceshipSpeed * 2.5
     }
 
 

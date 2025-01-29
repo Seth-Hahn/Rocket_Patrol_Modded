@@ -6,7 +6,7 @@ class Play extends Phaser.Scene {
     create() {
         //place tile sprite
         this.starfield = this.add.tileSprite(0, 0, 640, 480, 'starfield').setOrigin(0, 0)
-
+        this.starfield.depth = -1
         //green UI background
         this.add.rectangle(0, borderUISize + borderPadding, game.config.width, borderUISize * 2, 0x00FF00).setOrigin(0,0)
 
@@ -16,9 +16,14 @@ class Play extends Phaser.Scene {
         this.add.rectangle(0, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0, 0)
         this.add.rectangle(game.config.width - borderUISize, 0, borderUISize, game.config.height, 0xFFFFFF).setOrigin(0,0)
 
-        //add rocket p1
+        //add 2 player mode rockets if needed
+        if(isTwoPlayer) {
+            this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0)
+            this.p1Rocket.setTint(0xff0000)
+        } else {
+        //add 1 player rocket
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0)
-
+        }
         //add spaceships (x3)
         this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0)
         this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 20).setOrigin(0,0)
@@ -27,7 +32,8 @@ class Play extends Phaser.Scene {
         //add pincer ships (x2)
         this.pincer01 = new Pincer(this, game.config.width + borderUISize*8, borderUISize*3 + borderPadding*2, 'pincer', 0, 60).setOrigin(0, 0)
         this.pincer02 = new Pincer(this, game.config.width + borderUISize * 4, borderUISize * 8 + borderPadding, 'pincer', 0, 60).setOrigin(0,0)
-
+        this.pincer01.depth = -1
+        this.pincer02.depth = -1
         //define keys
         keyFIRE = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.F)
         keyRESET = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.R)
@@ -36,6 +42,7 @@ class Play extends Phaser.Scene {
 
         //initialize score
         this.p1Score = 0
+        this.p2Score = 0
 
         // display score
         let scoreConfig = {
@@ -51,7 +58,11 @@ class Play extends Phaser.Scene {
             fixedWidth: 100
         }
         this.scoreLeft = this.add.text(borderUISize + borderPadding, borderUISize + borderPadding*2, this.p1Score, scoreConfig)
-   
+        
+        //add two player score if applicable
+        if(isTwoPlayer) {
+            this.scoreRight = this.add.text(borderUISize*15 + borderPadding, borderUISize + borderPadding*2, this.p2Score, scoreConfig)
+        }
         //GAME OVER flag
         this.gameOver = false
 
@@ -60,12 +71,25 @@ class Play extends Phaser.Scene {
         this.clock = this.time.delayedCall(game.settings.gameTimer, () => {
             this.add.text(game.config.width/2, game.config.height/2, 'GAME OVER', scoreConfig).setOrigin(0.5)
             this.add.text(game.config.width/2, game.config.height/2 + 64, 'Press (R) to Restart or <- for Menu', scoreConfig).setOrigin(0.5)
+            
+            //show which player wins if two player
+            if(isTwoPlayer && this.p1Score > this.p2Score) { //player 1 victory
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Red wins! Score: ${this.p1Score}`, scoreConfig).setOrigin(0.5)
+            } else 
+            if (this.p2Score > this.p1Score) { //player 2 victory
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Blue wins! Score: ${this.p2Score}`, scoreConfig).setOrigin(0.5)
+            } else
+            if (isTwoPlayer && this.p1Score == this.p2Score) //draw
+            {
+                this.add.text(game.config.width/2, game.config.height/2 + 128, `Draw`, scoreConfig).setOrigin(0.5)
+            }
             this.gameOver = true
         }, null, this)
     }
 
     update() {
         if(this.gameOver && Phaser.Input.Keyboard.JustDown(keyRESET)) {
+            numRocketsFired = 0
             this.scene.restart()
         }
 
@@ -135,8 +159,15 @@ class Play extends Phaser.Scene {
         })
 
         //score add and text update
-        this.p1Score += ship.points
-        this.scoreLeft.text = this.p1Score
+
+        if(isTwoPlayer && numRocketsFired % 2 == 0) //update player 2 score if applicable
+        {
+            this.p2Score += ship.points
+            this.scoreRight.text = this.p2Score
+        } else { //update player one score
+            this.p1Score += ship.points
+            this.scoreLeft.text = this.p1Score
+        }
 
         this.sound.play('sfx-explosion')
     }

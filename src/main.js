@@ -29,4 +29,8 @@ let borderPadding = borderUISize / 3
 
 
 //reserve key bindings
-let keyFIRE, keyRESET, keyLEFT, keyRIGHT
+let keyFIRE, keyRESET, keyLEFT, keyRIGHT, keyDOWN
+
+//two player variables
+let isTwoPlayer = false
+let numRocketsFired = 0;
