@@ -27,6 +27,7 @@ class Rocket extends Phaser.GameObjects.Sprite {
         if(Phaser.Input.Keyboard.JustDown(keyFIRE)) {
             this.isFiring = true
             this.sfxShot.play()
+            numRocketsFired++
         }
 
         // if fired, move up
@@ -45,5 +46,12 @@ class Rocket extends Phaser.GameObjects.Sprite {
     reset() {
         this.isFiring = false
         this.y = game.config.height - borderUISize - borderPadding
+        //set proper color for two player mode
+        if(isTwoPlayer &&
+            numRocketsFired % 2 == 1) {
+            this.setTint(0x0000ff) //player two (blue)
+        } else {
+            this.setTint(0xff0000) //player one (red)
+        }
     }
 }
