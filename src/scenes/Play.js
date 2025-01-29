@@ -4,6 +4,20 @@ class Play extends Phaser.Scene {
     }
 
     create() {
+
+        //mouse controls
+        this.input.on('pointerdown', (pointer) => {
+            if(pointer.button === 0) {
+                wasLeftClickPressed = true
+            }
+        })
+
+        this.input.on('pointermove', (pointer) => {
+            mousePosition = pointer.x
+            isMouseInWindow = true
+        })
+
+
         //time tracking 
         this.startTime = this.time.now;
         this.totalGameTime = game.settings.gameTimer
@@ -27,11 +41,11 @@ class Play extends Phaser.Scene {
         //add 1 player rocket
         this.p1Rocket = new Rocket(this, game.config.width/2, game.config.height - borderUISize - borderPadding, 'rocket').setOrigin(0.5, 0)
         }
+        this.p1Rocket.setInteractive()
         //add spaceships (x3)
         this.ship01 = new Spaceship(this, game.config.width + borderUISize*6, borderUISize*4, 'spaceship', 0, 30).setOrigin(0, 0)
         this.ship02 = new Spaceship(this, game.config.width + borderUISize*3, borderUISize*5 + borderPadding*2, 'spaceship', 0, 20).setOrigin(0,0)
         this.ship03 = new Spaceship(this, game.config.width, borderUISize*6 + borderPadding*4, 'spaceship', 0, 10).setOrigin(0,0)
-
         //add pincer ships (x2)
         this.pincer01 = new Pincer(this, game.config.width + borderUISize*8, borderUISize*3 + borderPadding*2, 'pincer', 0, 60).setOrigin(0, 0)
         this.pincer02 = new Pincer(this, game.config.width + borderUISize * 4, borderUISize * 8 + borderPadding, 'pincer', 0, 60).setOrigin(0,0)
@@ -98,9 +112,9 @@ class Play extends Phaser.Scene {
 
         if(didRocketMiss) {
             this.adjustTime(-7000)
-            this.timeLost = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '-7 seconds', this.scoreConfig)
+            let timeLost = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '-7 seconds', this.scoreConfig)
             this.time.delayedCall(1000, () => { //show time added 
-            this.timeLost.destroy();
+            timeLost.destroy();
             })
             didRocketMiss = false
         }
@@ -143,9 +157,9 @@ class Play extends Phaser.Scene {
     shipExplode(ship) {
         //increase time on hit
         this.adjustTime(5000) //+5 seconds
-        this.timeAdded = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '+5 seconds', this.scoreConfig)
+        let timeAdded = this.add.text(borderUISize*7 + borderPadding, borderUISize + borderPadding*2, '+5 seconds', this.scoreConfig)
         this.time.delayedCall(1000, () => { //show time added 
-            this.timeAdded.destroy();
+            timeAdded.destroy();
         })
         //temporarily hide ship
         ship.alpha = 0
@@ -187,7 +201,7 @@ class Play extends Phaser.Scene {
         this.totalGameTime = elapsedTime + newTime;
 
         //create new timer
-        //console.log(newTime)
+        console.log(newTime)
         this.createTimer(newTime)
 
     }
